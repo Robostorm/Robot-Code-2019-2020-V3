@@ -7,21 +7,27 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.getMotorVeloci
 
 import android.support.annotation.NonNull;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.teamcode.drive.localizer.StandardTrackingWheelLocalizer;
 import org.firstinspires.ftc.teamcode.util.AxesSigns;
 import org.firstinspires.ftc.teamcode.util.BNO055IMUUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
+import org.jetbrains.annotations.NotNull;
 import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.ExpansionHubServo;
 import org.openftc.revextensions2.RevBulkData;
 
 /*
@@ -31,8 +37,11 @@ import org.openftc.revextensions2.RevBulkData;
 public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
     private ExpansionHubEx conhub;
     private ExpansionHubMotor leftFront, leftRear, rightRear, rightFront;
+    private ExpansionHubServo leftGrab, rightGrab, leftArm, rightArm, leftTray, rightTray;
+
     //private ExpansionHubEx exphub;
     private List<ExpansionHubMotor> motors;
+    private List<ExpansionHubServo> servos;
     private BNO055IMU imu;
 
     public SampleMecanumDriveREVOptimized(HardwareMap hardwareMap) {
@@ -48,7 +57,6 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
-        // upward (normal to the floor) using a command like the following:
         BNO055IMUUtil.remapAxes(imu, AxesOrder.XYZ, AxesSigns.NPN);
 
         leftFront = hardwareMap.get(ExpansionHubMotor.class, "front_left");
@@ -56,7 +64,15 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
         rightRear = hardwareMap.get(ExpansionHubMotor.class, "rear_right");
         rightFront = hardwareMap.get(ExpansionHubMotor.class, "front_right");
 
+        leftGrab = hardwareMap.get(ExpansionHubServo.class,"leftGrab");
+        rightGrab = hardwareMap.get(ExpansionHubServo.class,"rightGrab");
+        leftArm = hardwareMap.get(ExpansionHubServo.class,"leftArm");
+        rightArm = hardwareMap.get(ExpansionHubServo.class,"rightArm");
+        leftTray = hardwareMap.get(ExpansionHubServo.class, "leftTray");
+        rightTray = hardwareMap.get(ExpansionHubServo.class, "rightTray");
+
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
+        servos = Arrays.asList(leftGrab,rightGrab,leftArm,rightArm,leftTray,rightTray);
 
         for (ExpansionHubMotor motor : motors) {
             if (RUN_USING_ENCODER) {
@@ -65,15 +81,29 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
+        leftGrab.setPosition(0.4);//0.4 is open, 0.6 is closed
+        rightGrab.setPosition(0.6);//0.6 is open, 0.4 is closed
+        leftArm.setPosition(1);//0 is down, 1 is up
+        rightArm.setPosition(0); //0 is up, 1 is down
+        leftTray.setPosition(0);//0 is up, 1 is down
+        rightTray.setPosition(1);//0 is down, 1 is up
+
         if (RUN_USING_ENCODER && MOTOR_VELO_PID != null) {
             setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
         }
 
         rightRear.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
-''
+
         // TODO: if desired, use setLocalizer() to change the localization method
-        // for instance, setLocalizer(new ThreeTrackingWheelLocalizer(...));
+        setLocalizer(new StandardTrackingWheelLocalizer(hardwareMap));
+    }
+
+    public List<ExpansionHubServo> getServos(){
+        return servos;
+    }
+    public List<ExpansionHubMotor> getMotors(){
+        return motors;
     }
 
     @Override
