@@ -63,7 +63,7 @@ public class Teleop extends OpMode {
     public void intakeUpdate(){
         float left_trigger = gamepad1.left_trigger;//in
         float right_trigger = gamepad1.right_trigger;//out
-        if(left_trigger>0.05){//suck in
+        if(left_trigger>right_trigger){//suck in
             drive.setIntakePowers(-left_trigger);
         }else{
             drive.setIntakePowers(right_trigger);
@@ -74,7 +74,9 @@ public class Teleop extends OpMode {
         float ly = gamepad1.left_stick_y;
         float rx = gamepad1.right_stick_x;
         float ry = gamepad1.right_stick_y;
-        float mult = MathUtil.map(gamepad1.right_trigger,0,1,0.4f,1);
+        boolean gas = gamepad1.a;
+        float mult = gas ? 1f : 0.4f;
+        //float mult = MathUtil.map(gamepad1.right_trigger,0,1,0.4f,1);
         double[] velocities = calcVelocities(rx*mult, -ly*mult, lx*mult, -ry*mult);
         drive.setMotorPowers(velocities[0],velocities[2],velocities[3],velocities[1]);
     }
