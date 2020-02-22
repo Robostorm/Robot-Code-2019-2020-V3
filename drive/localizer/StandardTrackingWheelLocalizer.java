@@ -8,8 +8,11 @@ import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.RevBulkData;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,9 +44,11 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
 
     public static double LATERAL_DISTANCE = 14.8819; // in; distance between the left and right wheels
-    public static double FORWARD_OFFSET = 3.9074803; // in; offset of the lateral wheel
+    public static double FORWARD_OFFSET = -3.9074803; // in; offset of the lateral wheel
 
+    private List<DcMotor> motors;
     private DcMotor leftEncoder, rightEncoder, frontEncoder;
+    private ExpansionHubEx exphub;
 
     public StandardTrackingWheelLocalizer(HardwareMap hardwareMap) {
         super(Arrays.asList(
@@ -52,9 +57,13 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
                 new Pose2d(FORWARD_OFFSET, 0, Math.toRadians(90)) // front
         ));
 
+        exphub = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub");
+
         leftEncoder = hardwareMap.dcMotor.get("leftEncoder");
         rightEncoder = hardwareMap.dcMotor.get("rightEncoder");
         frontEncoder = hardwareMap.dcMotor.get("frontEncoder");
+
+        motors = Arrays.asList(leftEncoder,rightEncoder,frontEncoder);
     }
 
     public static double encoderTicksToInches(int ticks) {
@@ -64,10 +73,14 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     @NonNull
     @Override
     public List<Double> getWheelPositions() {
-        return Arrays.asList(
-                encoderTicksToInches(leftEncoder.getCurrentPosition()),
-                encoderTicksToInches(rightEncoder.getCurrentPosition()),
-                encoderTicksToInches(frontEncoder.getCurrentPosition())
-        );
+        RevBulkData bulkData = exphub.getBulkInputData();
+
+        if(bulkData ==null) return Arrays.asList(0.0,0.0,0.0,0.0);
+
+        List<Double> wheelPositions = new ArrayList<>();
+        for(DcMotor motor : motors){
+            wheelPositions.add(encoderTicksToInches(bulkData.getMotorCurrentPosition(motor)));
+        }
+        return wheelPositions;
     }
 }

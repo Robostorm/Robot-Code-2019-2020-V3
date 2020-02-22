@@ -36,11 +36,14 @@ import org.openftc.revextensions2.RevBulkData;
  */
 public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
     private ExpansionHubEx conhub;
+    private ExpansionHubEx exphub;
     private ExpansionHubMotor leftFront, leftRear, rightRear, rightFront;
     private ExpansionHubServo leftGrab, rightGrab, leftArm, rightArm, leftTray, rightTray;
 
-    //private ExpansionHubEx exphub;
+    private ExpansionHubMotor leftIntake, rightIntake;
+
     private List<ExpansionHubMotor> motors;
+    private List<ExpansionHubMotor> intake_motors;
     private List<ExpansionHubServo> servos;
     private BNO055IMU imu;
 
@@ -51,6 +54,7 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
         // for simplicity, we assume that the desired IMU and drive motors are on the same hub
         // if your motors are split between hubs, **you will need to add another bulk read**
         conhub = hardwareMap.get(ExpansionHubEx.class, "Control Hub");
+        exphub = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub");
 
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -63,6 +67,8 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
         leftRear = hardwareMap.get(ExpansionHubMotor.class, "rear_left");
         rightRear = hardwareMap.get(ExpansionHubMotor.class, "rear_right");
         rightFront = hardwareMap.get(ExpansionHubMotor.class, "front_right");
+        leftIntake = hardwareMap.get(ExpansionHubMotor.class, "intake_left");
+        rightIntake = hardwareMap.get(ExpansionHubMotor.class, "intake_right");
 
         leftGrab = hardwareMap.get(ExpansionHubServo.class,"leftGrab");
         rightGrab = hardwareMap.get(ExpansionHubServo.class,"rightGrab");
@@ -72,12 +78,17 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
         rightTray = hardwareMap.get(ExpansionHubServo.class, "rightTray");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
+        intake_motors = Arrays.asList(leftIntake,rightIntake);
         servos = Arrays.asList(leftGrab,rightGrab,leftArm,rightArm,leftTray,rightTray);
 
         for (ExpansionHubMotor motor : motors) {
             if (RUN_USING_ENCODER) {
                 motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             }
+            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        for(ExpansionHubMotor motor : intake_motors){
+            motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
@@ -150,6 +161,11 @@ public class SampleMecanumDriveREVOptimized extends SampleMecanumDriveBase {
             wheelVelocities.add(encoderTicksToInches(bulkData.getMotorVelocity(motor)));
         }
         return wheelVelocities;
+    }
+
+    public void setIntakePowers(float p){
+        leftIntake.setPower(p);
+        rightIntake.setPower(p);
     }
 
     @Override

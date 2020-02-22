@@ -33,6 +33,7 @@ public class Teleop extends OpMode {
     @Override
     public void loop() {
         driveUpdate();
+        intakeUpdate();
     }
     public double[] calcVelocities(double lx, double ly, double rx, double ry) {
         double v1 = ly + rx + lx + ry;
@@ -58,6 +59,15 @@ public class Teleop extends OpMode {
 
     @Override
     public void stop() {
+    }
+    public void intakeUpdate(){
+        float left_trigger = gamepad1.left_trigger;//in
+        float right_trigger = gamepad1.right_trigger;//out
+        if(left_trigger>0.05){//suck in
+            drive.setIntakePowers(-left_trigger);
+        }else{
+            drive.setIntakePowers(right_trigger);
+        }
     }
     public void driveUpdate(){
         float lx = gamepad1.left_stick_x;
