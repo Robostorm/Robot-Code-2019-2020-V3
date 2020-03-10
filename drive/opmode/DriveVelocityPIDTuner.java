@@ -41,7 +41,7 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
 @Config
 @TeleOp(group = "drive")
 public class DriveVelocityPIDTuner extends LinearOpMode {
-    public static double DISTANCE = 48;
+    public static double DISTANCE = 72;
 
     private static final String PID_VAR_NAME = "VELO_PID";
 

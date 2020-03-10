@@ -33,8 +33,17 @@ public class DriveConstants {
      * Set the first flag appropriately. If using the built-in motor velocity PID, update
      * MOTOR_VELO_PID with the tuned coefficients from DriveVelocityPIDTuner.
      */
+
+    //IF USING ODOMETRY:
+    /*
+    public static final boolean RUN_USING_ENCODER = false;
+    public static final PIDCoefficients MOTOR_VELO_PID = null;
+    */
+
+    //IF NOT USING ODOMETRY:
     public static final boolean RUN_USING_ENCODER = true;
-    public static final PIDCoefficients MOTOR_VELO_PID = null;//new PIDCoefficients(25,10,10);
+    public static final PIDCoefficients MOTOR_VELO_PID = null; //PID = 25, 10, 10
+
 
     /*
      * These are physical constants that can be determined from your robot (including the track
@@ -46,7 +55,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 2;
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 13.22;
+    public static double TRACK_WIDTH = 13.22; //14.46in in cad
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using

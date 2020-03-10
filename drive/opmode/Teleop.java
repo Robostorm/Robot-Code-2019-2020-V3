@@ -1,13 +1,11 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
 import android.renderscript.ScriptIntrinsicYuvToRGB;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import org.firstinspires.ftc.teamcode.drive.mecanum.SampleMecanumDriveBase;
 import org.firstinspires.ftc.teamcode.drive.mecanum.SampleMecanumDriveREVOptimized;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
@@ -25,6 +23,18 @@ public class Teleop extends OpMode {
     //construct drive class
     SampleMecanumDriveREVOptimized drive;
 
+    //Lift Arm States
+    public static int[] states = new int[]{0, -170};
+    public static int state=0;
+
+    //Lift Motor State
+    public static int liftState=0;
+
+    //Button Timers
+    public static long a2timer=0;
+    public static long b2timer=0;
+    public static long y2timer=0;
+
     @Override
     public void init() {
         drive = new SampleMecanumDriveREVOptimized(hardwareMap);
@@ -32,8 +42,11 @@ public class Teleop extends OpMode {
 
     @Override
     public void loop() {
-        driveUpdate();
+        long cur = System.currentTimeMillis();
+        driveUpdate1();
+        driveUpdate2(cur-a2timer>500,cur-b2timer>500, cur-y2timer>500);
         intakeUpdate();
+        telemetry.update();
     }
     public double[] calcVelocities(double lx, double ly, double rx, double ry) {
         double v1 = ly + rx + lx + ry;
@@ -62,22 +75,45 @@ public class Teleop extends OpMode {
     }
     public void intakeUpdate(){
         float left_trigger = gamepad1.left_trigger;//in
-        float right_trigger = gamepad1.right_trigger;//out
-        if(left_trigger>right_trigger){//suck in
-            drive.setIntakePowers(-left_trigger);
-        }else{
+        float right_trigger = gamepad1.right_trigger;//out2
+        if(left_trigger>right_trigger){//push out
+            drive.setIntakePowers(-0.75f*left_trigger);
+        }else{//suck in
             drive.setIntakePowers(right_trigger);
         }
     }
-    public void driveUpdate(){
+    public void driveUpdate1(){
         float lx = gamepad1.left_stick_x;
         float ly = gamepad1.left_stick_y;
         float rx = gamepad1.right_stick_x;
         float ry = gamepad1.right_stick_y;
-        boolean gas = gamepad1.a;
-        float mult = gas ? 1f : 0.4f;
-        //float mult = MathUtil.map(gamepad1.right_trigger,0,1,0.4f,1);
-        double[] velocities = calcVelocities(rx*mult, -ly*mult, lx*mult, -ry*mult);
+        boolean gas = gamepad1.left_bumper;
+        float mult = !gas ? 1f : 0.4f;
+        double[] velocities = calcVelocities(-rx*mult, ly*mult, -lx*mult, ry*mult);
         drive.setMotorPowers(velocities[0],velocities[2],velocities[3],velocities[1]);
+    }
+    public void driveUpdate2(boolean a2Ready, boolean b2Ready, boolean y2Ready){
+        boolean trayPuller = gamepad2.a;
+        boolean togglePos = gamepad2.b;
+        float ry = gamepad2.right_stick_y;
+        float ly = gamepad2.left_stick_y;
+        if(trayPuller && a2Ready){
+            drive.flipTrayPullers();
+            a2timer = System.currentTimeMillis();
+        }
+        if(togglePos && b2Ready){
+            state=1-state;
+            drive.setLiftArmPosition(states[state]);
+            b2timer=System.currentTimeMillis();
+        }
+        drive.setLiftMotorPowerRestricted(ly);
+        /*if(liftLevel && y2Ready){
+            liftState++;
+            if(liftState==5)liftState=0;
+            drive.setLiftMotorPosition(1500*liftState);
+            y2timer = System.currentTimeMillis();
+        }*/
+        telemetry.addData("Lift Position: ",drive.getLiftMotorPosition());
+        telemetry.addData("Lift Arm Position: ",drive.getLiftArmPosition());
     }
 }
